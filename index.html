@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sweet Delights - Homemade Sweets Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .heading {
+            font-family: 'Playfair Display', serif;
+        }
+        .sweet-card {
+            transition: transform 0.3s ease;
+        }
+        .sweet-card:hover {
+            transform: translateY(-5px);
+        }
+        .cart-popup {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-pink-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-pink-600 heading">Sweet Delights</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="relative" onclick="toggleCart()">
+                        <i class="bi bi-cart text-2xl text-pink-600"></i>
+                        <span id="cart-count" class="absolute -top-2 -right-2 bg-pink-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-pink-100 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h2 class="text-4xl md:text-5xl font-bold text-pink-800 heading">Handcrafted Sweets</h2>
+                <p class="mt-4 text-lg text-gray-600">Delicious homemade sweets made with love and tradition</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h3 class="text-2xl font-bold text-gray-800 mb-8 heading">Our Sweet Collection</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" id="products-grid">
+            <!-- Products will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- Cart Popup -->
+    <div id="cart-popup" class="fixed inset-0 bg-black bg-opacity-50 hidden" onclick="toggleCart()">
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white p-6 cart-popup" onclick="event.stopPropagation()">
+            <h3 class="text-2xl font-bold mb-4 heading">Your Cart</h3>
+            <div id="cart-items" class="space-y-4"></div>
+            <div class="mt-6 border-t pt-4">
+                <div class="flex justify-between text-lg font-semibold">
+                    <span>Total:</span>
+                    <span id="cart-total">₹0</span>
+                </div>
+                <button onclick="checkout()" class="w-full mt-4 bg-pink-600 text-white py-3 rounded-lg hover:bg-pink-700 transition">
+                    Checkout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            { id: 1, name: "Traditional Ladoo", price: 299, image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800" },
+            { id: 2, name: "Kaju Katli", price: 399, image: "https://images.unsplash.com/photo-1615487303420-4d4cb329f3b8?w=800" },
+            { id: 3, name: "Gulab Jamun", price: 249, image: "https://images.unsplash.com/photo-1543087903-1ac2ec7aa8c5?w=800" },
+            { id: 4, name: "Rasgulla", price: 279, image: "https://images.unsplash.com/photo-1605197184044-b1dae04a7a9c?w=800" },
+            { id: 5, name: "Barfi", price: 349, image: "https://images.unsplash.com/photo-1589238140275-161d48ec4469?w=800" },
+            { id: 6, name: "Jalebi", price: 199, image: "https://images.unsplash.com/photo-1528132596460-757b776e3015?w=800" }
+        ];
+
+        let cart = [];
+
+        function renderProducts() {
+            const productsGrid = document.getElementById('products-grid');
+            productsGrid.innerHTML = products.map(product => `
+                <div class="bg-white rounded-lg shadow-md p-6 sweet-card">
+                    <img src="${product.image}" alt="${product.name}" class="w-full h-48 object-cover rounded-lg mb-4">
+                    <h4 class="text-lg font-semibold">${product.name}</h4>
+                    <div class="flex justify-between items-center mt-4">
+                        <span class="text-pink-600 font-bold">₹${product.price}</span>
+                        <button onclick="addToCart(${product.id})" class="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existingItem = cart.find(item => item.id === productId);
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+
+            updateCartUI();
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCartUI();
+        }
+
+        function updateQuantity(productId, delta) {
+            const item = cart.find(item => item.id === productId);
+            if (item) {
+                item.quantity += delta;
+                if (item.quantity <= 0) {
+                    removeFromCart(productId);
+                } else {
+                    updateCartUI();
+                }
+            }
+        }
+
+        function updateCartUI() {
+            const cartCount = document.getElementById('cart-count');
+            const cartItems = document.getElementById('cart-items');
+            const cartTotal = document.getElementById('cart-total');
+
+            cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+            cartItems.innerHTML = cart.map(item => `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded">
+                        <div>
+                            <h4 class="font-semibold">${item.name}</h4>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <button onclick="updateQuantity(${item.id}, -1)" class="text-gray-500 hover:text-gray-700">-</button>
+                                <span>${item.quantity}</span>
+                                <button onclick="updateQuantity(${item.id}, 1)" class="text-gray-500 hover:text-gray-700">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-semibold">₹${item.price * item.quantity}</div>
+                        <button onclick="removeFromCart(${item.id})" class="text-red-500 text-sm">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            cartTotal.textContent = `₹${total}`;
+        }
+
+        function toggleCart() {
+            const cartPopup = document.getElementById('cart-popup');
+            cartPopup.classList.toggle('hidden');
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+            alert('Thank you for your order! We will process it soon.');
+            cart = [];
+            updateCartUI();
+            toggleCart();
+        }
+
+        // Initialize the page
+        renderProducts();
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
